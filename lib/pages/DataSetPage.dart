@@ -1,11 +1,12 @@
-import 'dart:io';
+import 'dart:convert';
 
+import 'package:af_support_open_ai/helper/RecipesList.dart';
+import 'package:af_support_open_ai/widgets/FileUploaderWidget.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 
-import '../widgets/MyTextField.dart';
 
 class DataSetPage extends StatefulWidget {
   @override
@@ -13,43 +14,111 @@ class DataSetPage extends StatefulWidget {
 }
 
 class _DataSetPageState extends State<DataSetPage> {
-  late TextEditingController _promptController;
-  late TextEditingController _completionController;
-
-  String _uploadedFileName = '';
-  String _uploadedFileContent = '';
+  List<String> rulesData = [];
+  String recipesData = "";
+  bool rulesUploaded = false;
+  bool recipeUploaded = false;
+  List<String> recipesInfo = [];
+  List<String> rulesInfo = [];
 
   @override
   void initState() {
     super.initState();
-    _promptController = TextEditingController();
-    _completionController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _promptController.dispose();
-    _completionController.dispose();
     super.dispose();
   }
 
-  Future<void> _uploadFile() async {}
+  Future<void> _uploadRecipesFile() async {
+    var picked = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json', 'txt'],
+        allowMultiple: false);
+    if (picked != null) {
+      PlatformFile file = picked.files.first;
+      recipesInfo.add("Name: ${file.name}");
+      recipesInfo.add("Size: ${file.size}");
+      recipesInfo.add("Extension: ${file.extension}");
 
-  void _clearFile() {
-    setState(() {
-      _uploadedFileName = '';
-      _uploadedFileContent = '';
-    });
+      String fileContent = utf8.decode(file.bytes as List<int>);
+      recipesData = fileContent;
+      setState(() {
+        recipeUploaded = true;
+      });
+    }
+    sendRecipeDataToServer();
   }
 
-  void _saveData() {
-    String prompt = _promptController.text;
-    String completion = _completionController.text;
+  Future<void> _uploadRulesFile() async {
+    var picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json', 'txt'],
+      allowMultiple: false,
+    );
+    if (picked != null) {
+      PlatformFile file = picked.files.first;
+      rulesInfo.add("Name: ${file.name}");
+      rulesInfo.add("Size: ${file.size}");
+      rulesInfo.add("Extension: ${file.extension}");
+      String fileContent = utf8.decode(file.bytes as List<int>);
+      rulesData = fileContent.split('\n');
+      setState(() {
+        rulesUploaded = true;
+      });
+    }
+    sendRulesDataToServer();
+  }
 
-    //TODO Upload data as a fine tune
+  Future<void> sendRecipeDataToServer() async {
+    if (recipeUploaded) {
+      final url = Uri.parse('http://localhost:8080/upload-recipes');
+      final headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
 
-    _promptController.clear();
-    _completionController.clear();
+      // Parse the JSON string directly into a Recipe object
+      //Recipe recipe = Recipe.fromJson(jsonDecode(recipesData));
+
+      RecipesList recipesList = RecipesList.fromJson(jsonDecode(recipesData));
+      final body = jsonEncode(recipesList.toJson());
+
+      // Use jsonEncode to convert the Recipe object to a JSON string
+      //final body = jsonEncode(recipe.toJson());
+
+      print(body);
+      final response = await post(url, headers: headers, body: body);
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        // Successful response, handle the result
+        print('Success ${response}');
+      } else {
+        // Error response, handle the error
+        print('Error: ${response.statusCode} - ${response.reasonPhrase}');
+        throw Exception('Failed to get response');
+      }
+    }
+  }
+
+
+
+  Future<void> sendRulesDataToServer() async {
+    if (rulesUploaded) {
+      final url = Uri.parse('http://localhost:8080/upload-rules');
+      final headers = {'Content-Type': 'application/json','Accept': 'application/json'};
+      final body = jsonEncode(rulesData);
+
+      final response = await post(url, headers: headers, body: body);
+      print(response.body);
+      if (response.statusCode == 200) {
+        // Successful response, handle the result
+        print('Success ${response}');
+      } else {
+        // Error response, handle the error
+        print('Error: ${response.statusCode} - ${response.reasonPhrase}');
+        throw Exception('Failed to get response');
+      }
+    }
   }
 
   @override
@@ -57,7 +126,7 @@ class _DataSetPageState extends State<DataSetPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Data Set Page',
+          'Upload Data Page',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xff434446),
@@ -77,100 +146,87 @@ class _DataSetPageState extends State<DataSetPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Upload a File:',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                          FileUploadWidget(
+                            title: "Upload Recipes File:",
+                            onPressed: _uploadRecipesFile,
                           ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: _uploadFile,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                            child: const Text(
-                              'Choose File',
-                              style: TextStyle(color: Colors.white),
-                            ),
+                          FileUploadWidget(
+                            title: "Upload Rules File:",
+                            onPressed: _uploadRulesFile,
                           ),
                         ],
                       ),
-                      if (_uploadedFileName != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Uploaded File:',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      Visibility(
+                        visible: recipeUploaded,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 16),
+                            Text(
+                              "Recipes Data: ${recipesInfo.toString()}",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              height: 150,
+                              // Set a fixed height or use constraints to limit the box size
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8.0),
                               ),
-                              const SizedBox(height: 8),
-                              Column(
-                                children: [
-                                  Text('Name: $_uploadedFileName'),
-                                  const Text('Content:'),
-                                  Text(
-                                    _uploadedFileContent ?? '',
-                                    style: const TextStyle(
-                                        fontFamily: 'monospace'),
-                                  ),
-                                ],
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: 1,
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      recipesData,
+                                      style: TextStyle(fontFamily: 'monospace'),
+                                    ),
+                                  );
+                                },
                               ),
-                              const SizedBox(height: 8),
-                              ElevatedButton(
-                                onPressed: _clearFile,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Clear File',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      ),
+                      Visibility(
+                        visible: rulesUploaded,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 16),
+                            Text(
+                              "Rules Data ${rulesInfo.toString()}:",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              height: 150,
+                              // Set a fixed height or use constraints to limit the box size
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: rulesData.length,
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    title: Text(
+                                      rulesData[index],
+                                      style: TextStyle(fontFamily: 'monospace'),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Enter Data Manually:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                MyTextField(
-                  controller: _promptController,
-                  hintText: 'Prompt',
-                ),
-                const SizedBox(height: 8),
-                MyTextField(
-                  controller: _completionController,
-                  hintText: 'Completion',
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _saveData,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: const Text(
-                    'Upload Data',
-                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ],
