@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:jumping_dot/jumping_dot.dart';
+import '../constants/app_constants.dart';
 import '../widgets/ChatMessage.dart';
 
 class ChatPage extends StatefulWidget {
@@ -75,7 +76,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<String> sendChatMessage(String message) async {
-    final url = Uri.parse('http://localhost:8080/embedded_chat');
+    final url = Uri.parse('https://dry-frost-4900.fly.dev/embedded_chat');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({"message": message});
 
@@ -93,7 +94,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<String> sendChatConversation(
       List<Map<String, String>> conversation) async {
-    final url = Uri.parse('http://localhost:8080/chat');
+    final url = Uri.parse('https://dry-frost-4900.fly.dev/chat');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode(conversation);
 

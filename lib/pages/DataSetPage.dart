@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:af_support_open_ai/constants/app_constants.dart';
 import 'package:af_support_open_ai/helper/RecipesList.dart';
 import 'package:af_support_open_ai/widgets/FileUploaderWidget.dart';
 import 'package:file_picker/file_picker.dart';
@@ -73,7 +74,7 @@ class _DataSetPageState extends State<DataSetPage> {
 
   Future<void> sendRecipeDataToServer() async {
     if (recipeUploaded) {
-      final url = Uri.parse('http://localhost:8080/upload-recipes');
+      final url = Uri.parse('https://dry-frost-4900.fly.dev/upload-recipes');
       final headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
 
       // Parse the JSON string directly into a Recipe object
@@ -104,7 +105,7 @@ class _DataSetPageState extends State<DataSetPage> {
 
   Future<void> sendRulesDataToServer() async {
     if (rulesUploaded) {
-      final url = Uri.parse('http://localhost:8080/upload-rules');
+      final url = Uri.parse('https://dry-frost-4900.fly.dev/upload-rules');
       final headers = {'Content-Type': 'application/json','Accept': 'application/json'};
       final body = jsonEncode(rulesData);
 
