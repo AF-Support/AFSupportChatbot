@@ -72,9 +72,11 @@ class _DataSetPageState extends State<DataSetPage> {
     sendRulesDataToServer();
   }
 
+  /// webURL [Production] - https://af-chat-bot.fly.dev
+  /// devURL [Development] - http://0.0.0.0:8080
   Future<void> sendRecipeDataToServer() async {
     if (recipeUploaded) {
-      final url = Uri.parse('https://dry-frost-4900.fly.dev/upload-recipes');
+      final url = Uri.parse('$webURL/upload-recipes');
       final headers = {'Content-Type': 'application/json', 'Accept': 'application/json'};
 
       // Parse the JSON string directly into a Recipe object
@@ -102,10 +104,11 @@ class _DataSetPageState extends State<DataSetPage> {
   }
 
 
-
+  /// webURL [Production] - https://af-chat-bot.fly.dev
+  /// devURL [Development] - http://0.0.0.0:8080
   Future<void> sendRulesDataToServer() async {
     if (rulesUploaded) {
-      final url = Uri.parse('https://dry-frost-4900.fly.dev/upload-rules');
+      final url = Uri.parse('$webURL/upload-rules');
       final headers = {'Content-Type': 'application/json','Accept': 'application/json'};
       final body = jsonEncode(rulesData);
 
