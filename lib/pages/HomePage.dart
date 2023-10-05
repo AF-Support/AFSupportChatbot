@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'DataSetPage.dart';
+import 'ZDQResolverPage.dart';
 import 'package:af_support_open_ai/pages/ChatPage.dart';
 
 class HomePage extends StatefulWidget {
@@ -8,11 +8,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _selectedOption = 'Home';
+  String _selectedOption = 'Zendesk Query Resolver';
 
   final Map<String, Widget> _pages = {
-    'Home': ChatPage(),
-    'Upload Data Set': DataSetPage(),
+    //'Home': ChatPage(),
+    'Zendesk Query Resolver': ZDQResolverPage(),
   };
 
   Widget _buildSidebarOption(String option) {
@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
                   padding: EdgeInsets.symmetric(vertical: 16),
                   alignment: Alignment.center,
                   child: Image.asset(
-                    'assets/logo.png',
+                    'assets/assets/logo.png',
                     width: 150,
                     height: 150,
                   ),
@@ -68,3 +68,4 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+//https://github.com/al-af/al-af.github.io/assets/118281047/2cdbdb3a-f31a-445e-af92-c1ab7da19852
